@@ -18,5 +18,12 @@
   "bugs": {
     "url": "https://github.com/leoelias023/sql-compiler/issues"
   },
-  "homepage": "https://github.com/leoelias023/sql-compiler#readme"
+  "homepage": "https://github.com/leoelias023/sql-compiler#readme",
+  "devDependencies": {
+    "eslint": "^8.11.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^8.5.0",
+    "jest": "^27.5.1",
+    "prettier": "^2.6.0"
+  }
 }

@@ -22,22 +22,22 @@ Split the SQL commands, reserverd words, strings, concatenation
 
 ```js
 [
-  "SELECT",
-  "",
+  'SELECT',
+  '',
   "'UUID'",
-  "||",
-  "chr(01)",
-  "",
+  '||',
+  'chr(01)',
+  '',
   "'CLIENT'",
-  "||",
-  "chr(01)",
-  "",
+  '||',
+  'chr(01)',
+  '',
   "'VERSION'",
-  "||",
-  "chr(01)",
-  "",
-  "FROM",
-  "clients",
+  '||',
+  'chr(01)',
+  '',
+  'FROM',
+  'clients',
 ];
 ```
 

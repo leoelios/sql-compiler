@@ -1,10 +1,9 @@
-import codeGenerator from "./modules/code-generator.js";
-import parser from "./modules/parser.mjs";
-import tokenizer from "./modules/tokenizer.mjs";
+import codeGenerator from './modules/code-generator.js';
+import parser from './modules/parser.mjs';
+import tokenizer from './modules/tokenizer.mjs';
 
 const tokens = tokenizer(`
-  Select 'Leonardo' as nome, 'Silva' as sobrenome, '123456789' as cpf
-    from dual
+SELECT name, age FROM person
 `);
 
 const ast = parser(tokens);

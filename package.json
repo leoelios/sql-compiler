@@ -1,25 +1,30 @@
 {
   "name": "sql-compiler",
   "version": "1.0.0",
-  "type": "module",
   "description": "A simple compiler to tokenize, parse and generate SQL code, allowing edit dynamically the query.",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "test": "jest",
+    "start": "node src/index.mjs"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/leoelias023/sql-compiler.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "sql",
+    "compiler",
+    "parser"
+  ],
+  "author": "Leonardo Elias <leoelias02@hotmail.com>",
+  "license": "agpl-3.0",
   "bugs": {
     "url": "https://github.com/leoelias023/sql-compiler/issues"
   },
   "homepage": "https://github.com/leoelias023/sql-compiler#readme",
   "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
+    "babel-jest": "^27.5.1",
     "eslint": "^8.11.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^8.5.0",

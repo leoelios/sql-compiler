@@ -48,6 +48,16 @@ export const generateColumn = node => {
   return builder;
 };
 
+/**
+ * @param {*} node a object that represent a AST node.
+ * @return {string} a SQL string.
+ */
+export function generateUnion(node) {
+  return `${codeGenerator(node.left)} ${node.type
+    .toUpperCase()
+    .replace('_', ' ')} ${codeGenerator(node.right)}`;
+}
+
 const codeGenerator = node => {
   switch (node.type) {
     case 'select':
@@ -56,6 +66,9 @@ const codeGenerator = node => {
       return generateFrom(node);
     case 'column':
       return generateColumn(node);
+    case 'union':
+    case 'union_all':
+      return generateUnion(node);
   }
 };
 

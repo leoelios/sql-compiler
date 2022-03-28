@@ -218,7 +218,6 @@ test('Generate function call column with an alias', () => {
   expect(result).toBe(`upper('Roberto') AS nome`);
 });
 
-
 test('Generate function call column', () => {
   const node = {
     type: 'column',
@@ -249,4 +248,170 @@ test('Generate a named column', () => {
   };
   const result = generateColumn(node);
   expect(result).toBe(`nome AS nome`);
-})
+});
+
+test('Generate union all select', () => {
+  const node = {
+    type: 'union_all',
+    left: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'nome',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'nome',
+            },
+          },
+        },
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'idade',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'idade',
+            },
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'pessoa',
+      },
+    },
+    right: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'nome',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'nome',
+            },
+          },
+        },
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'idade',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'idade',
+            },
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'pessoa',
+      },
+    },
+  };
+  const expected = `SELECT nome AS nome, idade AS idade FROM pessoa UNION ALL SELECT nome AS nome, idade AS idade FROM pessoa`;
+  const result = codeGenerator(node);
+  expect(result.toUpperCase()).toBe(expected.toUpperCase());
+});
+
+test('Generate union two select', () => {
+  const node = {
+    type: 'union',
+    left: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'nome',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'nome',
+            },
+          },
+        },
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'idade',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'idade',
+            },
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'pessoa',
+      },
+    },
+    right: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'nome',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'nome',
+            },
+          },
+        },
+        {
+          type: 'column',
+          columnValue: {
+            type: 'object_value',
+            value: 'idade',
+          },
+          alias: {
+            type: 'column_alias',
+            value: {
+              type: 'string_literal',
+              value: 'idade',
+            },
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'pessoa',
+      },
+    },
+  };
+  const expected = `SELECT nome AS nome, idade AS idade FROM pessoa UNION SELECT nome AS nome, idade AS idade FROM pessoa`;
+  const result = codeGenerator(node);
+  expect(result.toUpperCase()).toBe(expected.toUpperCase());
+});

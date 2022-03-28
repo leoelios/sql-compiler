@@ -3,6 +3,7 @@ const {
   lexer,
   syntaticAnalysis,
   default: parser,
+  isUnion,
 } = require('../../modules/parser.mjs');
 const { default: tokenizer } = require('../../modules/tokenizer.mjs');
 
@@ -189,4 +190,118 @@ test('Parser short SQL clausule tokens', () => {
       value: 'table',
     },
   });
+});
+
+test('Parse SQL union all of two select queries', () => {
+  const tokens = tokenizer(
+    `SELECT * FROM table1 UNION ALL SELECT * FROM table2`
+  );
+  const ast = parser(tokens);
+  expect(ast).toEqual({
+    type: 'union_all',
+    left: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table1',
+      },
+    },
+    right: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table2',
+      },
+    },
+  });
+});
+
+test('Parse SQL union of two select queries', () => {
+  const tokens = tokenizer(
+    `SELECT * FROM table1 UNION SELECT * FROM table2`
+  );
+  const ast = parser(tokens);
+  expect(ast).toEqual({
+    type: 'union',
+    left: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table1',
+      },
+    },
+    right: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table2',
+      },
+    },
+  });
+});
+
+test('Verify if is union', () => {
+  const tokens = [
+    {
+      type: Type.UNION,
+      value: 'Union',
+    },
+  ];
+
+  expect(isUnion(tokens, 0)).toBe(true);
+});
+
+test('Verify if is union All', () => {
+  const tokens = [
+    {
+      type: Type.UNION,
+      value: 'Union',
+    },
+    {
+      type: Type.ALL,
+      value: 'all',
+    },
+  ];
+
+  expect(isUnion(tokens, 0)).toBe(true);
 });

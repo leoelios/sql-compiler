@@ -5,6 +5,30 @@ import { isNotEmptySpace } from '../utils/app.mjs';
 export default tokens => syntaticAnalysis(lexer(tokens));
 
 /**
+ * @param {Array<String>} tokens an array of tokens.
+ * @param {Integer} index index of the token to be analyzed.
+ * @return {Boolean} If the current token is an union operator.
+ */
+export function isUnion(tokens, index) {
+  return (
+    tokens[index]?.type === Type.UNION ||
+    (tokens[index]?.type === Type.UNION && tokens[index + 1]?.type === Type.ALL)
+  );
+}
+
+/**
+ * @param {Array<String>} tokens an array of tokens.
+ * @param {Integer} index current index of the token to be analyzed.
+ * @return {Type} the type of the union operator (e. g. UNION, UNION_ALL).
+ */
+export function getUnionType(tokens, index) {
+  return tokens[index]?.type === Type.UNION &&
+    tokens[index + 1]?.type === Type.ALL
+    ? Type.UNION_ALL
+    : Type.UNION;
+}
+
+/**
  * Make the lexical analysis of the tokens.
  *
  * @param {Array<String>} tokens Tokens to be analyzed.
@@ -107,13 +131,6 @@ export function syntaticAnalysis(tokens) {
       };
     }
 
-    // if (token.type === Type.FROM_STATEMENT) {
-    //   return {
-    //     type: 'from',
-    //     object: walk(tokens, index + 1),
-    //   };
-    // }
-
     if (token.type === Type.UNKNOWN) {
       if (
         lastToken.type === Type.UNKNOWN &&
@@ -180,10 +197,22 @@ export function syntaticAnalysis(tokens) {
         });
       }
 
-      return {
+      const currentSelect = {
         type: 'select',
         columns: columns,
-        from: walk(tokens, i + 1),
+        from: walk(tokens, ++i),
+      };
+
+      if (!isUnion(tokens, ++i)) {
+        return currentSelect;
+      }
+
+      const unionType = getUnionType(tokens, i);
+
+      return {
+        type: unionType,
+        left: currentSelect,
+        right: walk(tokens, unionType === Type.UNION_ALL ? i + 2 : i + 1),
       };
     }
   };

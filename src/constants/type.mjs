@@ -4,6 +4,8 @@
 export class Type {
   static EMPTY_SPACE = 'empty_space';
   static SELECT_STATEMENT = 'select_statement';
+  static UNION = 'union';
+  static UNION_ALL = 'union_all';
   static FROM_STATEMENT = 'from_statement';
   static WHERE_STATEMENT = 'where_statement';
   static ORDER_BY_STATEMENT = 'order_by_statement';
@@ -14,6 +16,7 @@ export class Type {
   static FUNCTION_CALL = 'function_call';
   static UNKNOWN = 'unknown';
   static ASTERISK = 'asterisk';
+  static ALL = 'all';
 
   /**
    * @return {Array<string>} all types of tokens declareted disregarding the empty space.
@@ -29,6 +32,8 @@ export const tokenTypes = {
   SELECT: Type.SELECT_STATEMENT,
   FROM: Type.FROM_STATEMENT,
   WHERE: Type.WHERE_STATEMENT,
+  ALL: Type.ALL,
+  UNION: Type.UNION,
   'ORDER BY': Type.ORDER_BY_STATEMENT,
   LIMIT: Type.LIMIT_STATEMENT,
   '||': Type.CONCAT_OPERATOR,

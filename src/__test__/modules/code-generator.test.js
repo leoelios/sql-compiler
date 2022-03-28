@@ -217,3 +217,36 @@ test('Generate function call column with an alias', () => {
   const result = generateColumn(node);
   expect(result).toBe(`upper('Roberto') AS nome`);
 });
+
+
+test('Generate function call column', () => {
+  const node = {
+    type: 'column',
+    columnValue: {
+      type: 'function_call',
+      name: 'to_number',
+      arguments: ["'33'"],
+    },
+  };
+  const result = generateColumn(node);
+  expect(result).toBe(`to_number('33')`);
+});
+
+test('Generate a named column', () => {
+  const node = {
+    type: 'column',
+    columnValue: {
+      type: 'object_value',
+      value: 'nome',
+    },
+    alias: {
+      type: 'alias',
+      value: {
+        type: 'alias_value',
+        value: 'nome',
+      },
+    },
+  };
+  const result = generateColumn(node);
+  expect(result).toBe(`nome AS nome`);
+})

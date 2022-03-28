@@ -1,8 +1,8 @@
 import { ReservedWord } from '../constants/reserved-words.mjs';
 import { Type, tokenTypes } from '../constants/type.mjs';
-import { removeEmptySpace } from '../utils/app-utils.mjs';
+import { isNotEmptySpace } from '../utils/app.mjs';
 
-export default tokens => syntaticAnalysis(lexicalAnalysis(tokens));
+export default tokens => syntaticAnalysis(lexer(tokens));
 
 /**
  * Make the lexical analysis of the tokens.
@@ -10,7 +10,7 @@ export default tokens => syntaticAnalysis(lexicalAnalysis(tokens));
  * @param {Array<String>} tokens Tokens to be analyzed.
  * @return {Array<Object>} The AST (Abstract Syntax Tree).
  */
-export function lexicalAnalysis(tokens) {
+export function lexer(tokens) {
   const isString = token => token.startsWith("'") && token.endsWith("'");
   const isFunctionCall = token => token.match(/^([a-zA-Z0-9_]+)\((.*)\)$/);
 
@@ -42,7 +42,18 @@ export function lexicalAnalysis(tokens) {
  * @param {List<Object>} tokens tokens.
  * @return {List<Object>} The AST (Abstract Syntax Tree).
  */
-function syntaticAnalysis(tokens) {
+export function syntaticAnalysis(tokens) {
+  const processUniqueColumn = column => {
+    if (column.type === Type.FUNCTION_CALL) {
+      return column;
+    }
+
+    return {
+      type: column.type,
+      value: column.value,
+    };
+  };
+
   const processColumnValueFromParts = columnParts => {
     if (columnParts.some(part => part.type === Type.CONCAT_OPERATOR)) {
       return {
@@ -54,10 +65,7 @@ function syntaticAnalysis(tokens) {
     }
 
     if (columnParts.length === 1) {
-      return {
-        type: columnParts[0].type,
-        value: columnParts[0].value,
-      };
+      return processUniqueColumn(columnParts[0]);
     }
   };
 
@@ -70,7 +78,6 @@ function syntaticAnalysis(tokens) {
 
       const functionName = value.substring(0, value.indexOf('('));
 
-      // TODO - implement walk on function arguments.
       const functionArguments = value
         .substring(value.indexOf('(') + 1, value.indexOf(')'))
         .split(',');
@@ -100,12 +107,12 @@ function syntaticAnalysis(tokens) {
       };
     }
 
-    if (token.type === Type.FROM_STATEMENT) {
-      return {
-        type: 'from',
-        object: walk(tokens, index + 1),
-      };
-    }
+    // if (token.type === Type.FROM_STATEMENT) {
+    //   return {
+    //     type: 'from',
+    //     object: walk(tokens, index + 1),
+    //   };
+    // }
 
     if (token.type === Type.UNKNOWN) {
       if (
@@ -139,8 +146,6 @@ function syntaticAnalysis(tokens) {
     }
 
     if (token.type === Type.SELECT_STATEMENT) {
-      // get columns from tokens separated by comma delimiter
-
       let i = index + 1;
       const columns = [];
       let columnParts = [];
@@ -181,11 +186,7 @@ function syntaticAnalysis(tokens) {
         from: walk(tokens, i + 1),
       };
     }
-
-    if (index < tokens.length - 1) {
-      return walk(tokens, index + 1);
-    }
   };
 
-  return walk(tokens.filter(removeEmptySpace), 0);
+  return walk(tokens.filter(isNotEmptySpace), 0);
 }

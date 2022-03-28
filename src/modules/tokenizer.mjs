@@ -1,18 +1,12 @@
-const removeLineBreak = str => str.replace(/\r?\n/g, '');
-
-const filterExtraSpaces = (token, index, tokens) => {
-  return !(token == '' && tokens[index + 1] == '');
-};
+import { filterExtraSpaces, removeLineBreak } from '../utils/app.mjs';
 
 export default command => {
-  if (command.length === 0) {
-    return [];
-  }
-
-  return command
-    .trim()
-    .replaceAll(',', ' , ')
-    .split(' ')
-    .filter(filterExtraSpaces)
-    .map(removeLineBreak);
+  return command?.length > 0
+    ? command
+        .trim()
+        .replaceAll(',', ' , ')
+        .split(' ')
+        .filter(filterExtraSpaces)
+        .map(removeLineBreak)
+    : [];
 };

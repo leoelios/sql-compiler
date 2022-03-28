@@ -14,6 +14,13 @@ export class Type {
   static FUNCTION_CALL = 'function_call';
   static UNKNOWN = 'unknown';
   static ASTERISK = 'asterisk';
+
+  /**
+   * @return {Array<string>} all types of tokens declareted disregarding the empty space.
+   */
+  static get typesWithoutEmptySpace() {
+    return Object.values(Type).filter(type => type !== Type.EMPTY_SPACE);
+  }
 }
 
 export const tokenTypes = {

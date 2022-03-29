@@ -6,6 +6,7 @@ export class Type {
   static SELECT_STATEMENT = 'select_statement';
   static UNION = 'union';
   static UNION_ALL = 'union_all';
+  static WHERE = 'where';
   static FROM_STATEMENT = 'from_statement';
   static WHERE_STATEMENT = 'where_statement';
   static ORDER_BY_STATEMENT = 'order_by_statement';
@@ -17,6 +18,26 @@ export class Type {
   static UNKNOWN = 'unknown';
   static ASTERISK = 'asterisk';
   static ALL = 'all';
+
+  /**
+   * @return {Array<string>} all types of tokens that can indicate a final of WHERE clausule.
+   */
+  static getWhereEndWords() {
+    return [
+      Type.UNION,
+      Type.ALL,
+      Type.LIMIT_STATEMENT,
+      Type.ORDER_BY_STATEMENT,
+    ];
+  }
+
+  /**
+   * @param {*} token Token to be checked.
+   * @return {Boolean} If the token is a type of token that can indicate a final of WHERE clausule.
+   */
+  static isEndOfWhere(token) {
+    return Type.getWhereEndWords().includes(token?.type?.toLowerCase());
+  }
 
   /**
    * @return {Array<string>} all types of tokens declareted disregarding the empty space.
@@ -34,6 +55,7 @@ export const tokenTypes = {
   WHERE: Type.WHERE_STATEMENT,
   ALL: Type.ALL,
   UNION: Type.UNION,
+  WHERE: Type.WHERE,
   'ORDER BY': Type.ORDER_BY_STATEMENT,
   LIMIT: Type.LIMIT_STATEMENT,
   '||': Type.CONCAT_OPERATOR,

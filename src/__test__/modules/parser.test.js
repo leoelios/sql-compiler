@@ -235,11 +235,8 @@ test('Parse SQL union all of two select queries', () => {
     },
   });
 });
-
 test('Parse SQL union of two select queries', () => {
-  const tokens = tokenizer(
-    `SELECT * FROM table1 UNION SELECT * FROM table2`
-  );
+  const tokens = tokenizer(`SELECT * FROM table1 UNION SELECT * FROM table2`);
   const ast = parser(tokens);
   expect(ast).toEqual({
     type: 'union',
@@ -304,4 +301,134 @@ test('Verify if is union All', () => {
   ];
 
   expect(isUnion(tokens, 0)).toBe(true);
+});
+
+test('Parse SQL select with where and with union with other select', () => {
+  const tokens = tokenizer(
+    `SELECT * FROM table1 WHERE id = 1 UNION ALL SELECT * FROM table2 WHERE id = 2`
+  );
+  const ast = parser(tokens);
+  expect(ast).toEqual({
+    type: 'union_all',
+    left: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table1',
+      },
+      where: {
+        type: 'where',
+        conjunction: {
+          type: 'equals',
+          left: {
+            type: 'unknown',
+            value: 'id',
+          },
+          right: {
+            type: 'object_value',
+            value: '1',
+          },
+        },
+      },
+    },
+    right: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table2',
+      },
+      where: {
+        type: 'where',
+        conjunction: {
+          type: 'equals',
+          left: {
+            type: 'unknown',
+            value: 'id',
+          },
+          right: {
+            type: 'object_value',
+            value: '2',
+          },
+        },
+      },
+    },
+  });
+});
+
+test('Parse SQL clausule with union and where', () => {
+  const tokens = tokenizer(
+    `SELECT * FROM table1 UNION SELECT * FROM table2 WHERE id = 1`
+  );
+  const ast = parser(tokens);
+  expect(ast).toEqual({
+    type: 'union',
+    left: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table1',
+      },
+    },
+    right: {
+      type: 'select',
+      columns: [
+        {
+          type: 'column',
+          alias: null,
+          columnValue: {
+            type: 'asterisk',
+            value: '*',
+          },
+        },
+      ],
+      from: {
+        type: 'from_object',
+        value: 'table2',
+      },
+      where: {
+        type: 'where',
+        conjunction: {
+          type: 'equals',
+          left: {
+            type: 'unknown',
+            value: 'id',
+          },
+          right: {
+            type: 'object_value',
+            value: '1',
+          },
+        },
+      },
+    },
+  });
 });

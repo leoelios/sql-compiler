@@ -4,4 +4,14 @@
  */
 export class ReservedWord {
   static AS = 'AS';
+  static EQUALS = '=';
+  static AND = 'AND';
+  static OR = 'OR';
+
+  /**
+   * Conjuctors reserved words
+   */
+  static get conjunctors() {
+    return [ReservedWord.AND, ReservedWord.OR];
+  }
 }

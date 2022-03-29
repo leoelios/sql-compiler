@@ -1,7 +1,13 @@
 export const generateSelect = node => {
   return `SELECT ${node.columns
     .map(column => codeGenerator(column))
-    .join(', ')} ${codeGenerator(node.from)}`;
+    .join(', ')} ${codeGenerator(node.from)} ${codeGenerator(
+    node.where
+  )}`.trim();
+};
+
+export const generateWhere = ({ conjunction }) => {
+  return `WHERE ${codeGenerator(conjunction)}`;
 };
 
 export const generateFrom = ({ value }) => {
@@ -12,26 +18,33 @@ export const generateFrom = ({ value }) => {
   return `FROM ${value}`;
 };
 
+export const handleColumnType = ({
+  type,
+  value,
+  name,
+  arguments: argumentos,
+}) => {
+  if (type == 'string_literal') {
+    return `'${value}'`;
+  }
+
+  if (type == 'asterisk') {
+    return '*';
+  }
+
+  if (type == 'object_value') {
+    return value;
+  }
+
+  if (type == 'function_call') {
+    return `${name}(${argumentos.join(', ')})`;
+  }
+
+  return '';
+};
+
 export const generateColumn = node => {
   const { columnValue: column, alias } = node;
-
-  const handleColumnType = ({ type, value, name, arguments: argumentos }) => {
-    if (type == 'string_literal') {
-      return `'${value}'`;
-    }
-
-    if (type == 'asterisk') {
-      return '*';
-    }
-
-    if (type == 'object_value') {
-      return value;
-    }
-
-    if (type == 'function_call') {
-      return `${name}(${argumentos.join(', ')})`;
-    }
-  };
 
   let builder = '';
 
@@ -59,7 +72,7 @@ export function generateUnion(node) {
 }
 
 const codeGenerator = node => {
-  switch (node.type) {
+  switch (node?.type) {
     case 'select':
       return generateSelect(node);
     case 'from_object':
@@ -69,7 +82,23 @@ const codeGenerator = node => {
     case 'union':
     case 'union_all':
       return generateUnion(node);
+    case 'where':
+      return generateWhere(node);
+    case 'string_literal':
+      return `'${node.value}'`;
+    case 'object_value':
+    case 'unknown':
+      return node.value;
+    case 'equals':
+      return `${codeGenerator(node.left)} = ${codeGenerator(node.right)}`;
+    case 'or':
+    case 'and':
+      return `${codeGenerator(
+        node.left
+      )} ${node.type.toUpperCase()} ${codeGenerator(node.right)}`;
   }
+
+  return '';
 };
 
 export default codeGenerator;

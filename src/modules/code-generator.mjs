@@ -1,61 +1,36 @@
-export const generateSelect = node => {
+import Command from '../constants/command.mjs';
+import Comparator from '../constants/comparator.mjs';
+import Operator from '../constants/operator.mjs';
+import Other from '../constants/other.mjs';
+import ReservedWord from '../constants/reserved-words.mjs';
+
+export const generateSelect = ({ value: node }) => {
   return `SELECT ${node.columns
-    .map(column => codeGenerator(column))
-    .join(', ')} ${codeGenerator(node.from)} ${codeGenerator(
-    node.where
-  )}`.trim();
+    .map(column => generateColumn(column))
+    .join(', ')} ${generateFrom(node.from)} ${
+    node.where ? codeGenerator(node.where) : ''
+  }`.trim();
 };
 
-export const generateWhere = ({ conjunction }) => {
-  return `WHERE ${codeGenerator(conjunction)}`;
+export const generateFrom = ({ type, value, alias }) => {
+  let builder = `FROM ${codeGenerator({ type, value })}`;
+
+  if (alias) {
+    builder += ` ${alias}`;
+  }
+
+  return builder;
 };
 
-export const generateFrom = ({ value }) => {
-  if (!value) {
-    throw new Error('from_value cannot be null');
-  }
-
-  return `FROM ${value}`;
-};
-
-export const handleColumnType = ({
-  type,
-  value,
-  name,
-  arguments: argumentos,
-}) => {
-  if (type == 'string_literal') {
-    return `'${value}'`;
-  }
-
-  if (type == 'asterisk') {
-    return '*';
-  }
-
-  if (type == 'object_value') {
-    return value;
-  }
-
-  if (type == 'function_call') {
-    return `${name}(${argumentos.join(', ')})`;
-  }
-
-  return '';
-};
-
-export const generateColumn = node => {
-  const { columnValue: column, alias } = node;
+export const generateColumn = column => {
+  const { alias } = column;
 
   let builder = '';
 
-  if (column.type === 'concatenation') {
-    builder += column.elements.map(handleColumnType).join(' || ');
-  } else {
-    builder += handleColumnType(column);
-  }
+  builder += codeGenerator(column);
 
   if (alias && alias !== null) {
-    builder += ` AS ${alias.value.value}`;
+    builder += ` AS ${alias}`;
   }
 
   return builder;
@@ -72,33 +47,44 @@ export function generateUnion(node) {
 }
 
 const codeGenerator = node => {
-  switch (node?.type) {
-    case 'select':
-      return generateSelect(node);
-    case 'from_object':
-      return generateFrom(node);
-    case 'column':
-      return generateColumn(node);
-    case 'union':
-    case 'union_all':
-      return generateUnion(node);
-    case 'where':
-      return generateWhere(node);
-    case 'string_literal':
-      return `'${node.value}'`;
-    case 'object_value':
-    case 'unknown':
-      return node.value;
-    case 'equals':
-      return `${codeGenerator(node.left)} = ${codeGenerator(node.right)}`;
-    case 'or':
-    case 'and':
-      return `${codeGenerator(
-        node.left
-      )} ${node.type.toUpperCase()} ${codeGenerator(node.right)}`;
+  const { type } = node;
+
+  if (Command.SELECT === type) {
+    return generateSelect(node);
+  } else if ([ReservedWord.UNION, Other.UNION_ALL].includes(type)) {
+    return generateUnion(node);
+  } else if (Other.PARENTHESIS === type) {
+    return `(${codeGenerator(node.value)})`;
+  } else if (
+    [Operator.getKeyFromValue(Operator.WILDCARD), Other.NUMERIC].includes(type)
+  ) {
+    return node.value;
+  } else if (Other.STRING === type) {
+    return `'${node.value}'`;
+  } else if (Other.FUNCTION_CALL === type) {
+    return `${node.name}(${node.arguments
+      .map(arg => codeGenerator(arg))
+      .join(', ')})`;
+  } else if (Other.QUOTED_IDENTIFIER === type) {
+    return `"${node.value}"`;
+  } else if (Other.CONCATENATION === type) {
+    return node.value.map(codeGenerator).join(' || ');
+  } else if ([Other.IDENTIFIER, Operator.WILDCARD].includes(type)) {
+    return node.value;
+  } else if (ReservedWord.WHERE === type) {
+    return `WHERE ${codeGenerator(node.value)}`;
+  } else if (Operator.isLogical(type)) {
+    return `${codeGenerator(node.left)} ${type} ${codeGenerator(node.right)}`;
+  } else if (Comparator.is(type)) {
+    return `${codeGenerator(node.left)} ${Comparator.getValueFromKey(
+      type
+    )} ${codeGenerator(node.right)}`;
   }
 
-  return '';
+  throw new Error(
+    "Unsupported node (it's cannot be found as a handled type) " +
+      JSON.stringify(node)
+  );
 };
 
 export default codeGenerator;

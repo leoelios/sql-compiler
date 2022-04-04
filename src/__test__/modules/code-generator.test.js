@@ -1,608 +1,464 @@
-import {
-  generateFrom,
-  generateColumn,
-  generateSelect,
-  default as codeGenerator,
-  handleColumnType,
-} from '../../modules/code-generator.mjs';
+import Other from '../../constants/other.mjs';
+import codeGenerator from '../../modules/code-generator.mjs';
 
-test('Generate FROM clausule without a from_value', () => {
-  const node = {
-    type: 'from_object',
-    value: null,
-  };
-
-  expect(() => generateFrom(node)).toThrow('from_value cannot be null');
-});
-
-test('Generate FROM clausule with value', () => {
-  const node = {
-    type: 'from_object',
-    value: 'pessoa',
-  };
-  const expected = 'FROM pessoa';
-  const result = generateFrom(node);
-  expect(result).toBe(expected);
-});
-
-test('Generate function call column', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'function_call',
-      name: 'nome',
-      arguments: ['pessoa'],
-    },
-  };
-  const expected = 'nome(pessoa)';
-  const result = generateColumn(node);
-  expect(result).toBe(expected);
-});
-
-test('Generate column function call using handle', () => {
-  const node = {
-    type: 'function_call',
-    name: 'nome',
-    arguments: ['pessoa'],
-  };
-  const expected = 'nome(pessoa)';
-  const result = handleColumnType(node);
-  expect(result).toBe(expected);
-});
-
-test('Handle column with an invalid value', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'unknown',
-      value: '',
-    },
-  };
-  const expected = '';
-  const result = generateColumn(node);
-  expect(result).toBe(expected);
-});
-
-test('Generate concatenated column with an alias', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'concatenation',
-      elements: [
+test('Generate simple SQL query', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
         {
-          type: 'string_literal',
-          value: 'nome',
-        },
-        {
-          type: 'function_call',
-          name: 'concat',
-          arguments: ['01'],
-        },
-        {
-          type: 'object_value',
-          value: 'idade',
-        },
-      ],
-    },
-    alias: {
-      type: 'column_alias',
-      value: {
-        type: 'string_literal',
-        value: 'nome',
-      },
-    },
-  };
-  const expected = "'nome' || concat(01) || idade AS nome";
-  const result = generateColumn(node);
-  expect(result).toBe(expected);
-});
-
-test('Generate select on table people using codeGenerator', () => {
-  const node = {
-    type: 'select',
-    columns: [
-      {
-        type: 'column',
-        columnValue: {
-          type: 'object_value',
-          value: 'nome',
-        },
-        alias: {
-          type: 'column_alias',
-          value: {
-            type: 'string_literal',
-            value: 'nome',
-          },
-        },
-      },
-      {
-        type: 'column',
-        columnValue: {
-          type: 'object_value',
-          value: 'idade',
-        },
-        alias: {
-          type: 'column_alias',
-          value: {
-            type: 'string_literal',
-            value: 'idade',
-          },
-        },
-      },
-    ],
-    from: {
-      type: 'from_object',
-      value: 'pessoa',
-    },
-  };
-  const expected = 'SELECT nome AS nome, idade AS idade FROM pessoa';
-  const result = codeGenerator(node);
-  expect(result).toBe(expected);
-});
-
-test('Generate select on table people', () => {
-  const node = {
-    type: 'select',
-    columns: [
-      {
-        type: 'column',
-        columnValue: {
-          type: 'string_literal',
+          type: 'STRING',
           value: 'Roberto',
         },
-        alias: {
-          type: 'column_alias',
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'dual',
+      },
+    },
+  });
+
+  expect(sql).toBe("SELECT 'Roberto' FROM dual");
+});
+
+test('Generate select with column and table alias', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'STRING',
+          value: 'Roberto',
+          alias: 'name',
+        },
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'dual',
+        alias: 'dual_alias',
+      },
+    },
+  });
+
+  expect(sql).toBe("SELECT 'Roberto' AS name FROM dual dual_alias");
+});
+
+test('Generate select with string within parenthesis', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'STRING',
+          value: 'Roberto',
+        },
+      ],
+      from: {
+        type: 'PARENTHESIS',
+        value: {
+          type: 'IDENTIFIER',
+          value: 'dual',
+        },
+      },
+    },
+  });
+
+  expect(sql).toBe("SELECT 'Roberto' FROM (dual)");
+});
+
+test('Generate select with subquery column', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: Other.PARENTHESIS,
           value: {
-            type: 'string_literal',
-            value: 'nome',
+            type: 'SELECT',
+            value: {
+              columns: [
+                {
+                  type: 'STRING',
+                  value: 'Roberto',
+                },
+              ],
+              from: {
+                type: 'IDENTIFIER',
+                value: 'dual',
+              },
+            },
+          },
+          alias: 'test',
+        },
+        {
+          type: 'CONCATENATION',
+          value: [
+            {
+              type: 'STRING',
+              value: ' ',
+            },
+            {
+              type: 'IDENTIFIER',
+              value: 'test',
+            },
+          ],
+        },
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'table',
+      },
+    },
+  });
+
+  expect(sql).toBe(
+    "SELECT (SELECT 'Roberto' FROM dual) AS test, ' ' || test FROM table"
+  );
+});
+
+test('Generate select with subquery from', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'STRING',
+          value: 'Roberto',
+        },
+      ],
+      from: {
+        type: 'PARENTHESIS',
+        alias: 'dual_alias',
+        value: {
+          type: 'SELECT',
+          value: {
+            columns: [
+              {
+                type: 'STRING',
+                value: 'Roberto',
+                alias: 'name',
+              },
+            ],
+            from: {
+              type: 'IDENTIFIER',
+              value: 'dual',
+            },
           },
         },
       },
-    ],
-    from: {
-      type: 'from_object',
-      value: 'pessoa',
     },
-  };
-  const result = generateSelect(node);
-  expect(result).toBe("SELECT 'Roberto' AS nome FROM pessoa");
+  });
+
+  expect(sql).toBe(
+    "SELECT 'Roberto' FROM (SELECT 'Roberto' AS name FROM dual) dual_alias"
+  );
 });
 
-test('Generate asterisk (all) column', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'asterisk',
-    },
-    alias: null,
-  };
-  const expected = '*';
-  const result = generateColumn(node);
-  expect(result).toBe(expected);
-});
-
-test('Generate concatenated string column', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'concatenation',
-      elements: [
+test('Generate select with function call column', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
         {
-          type: 'string_literal',
+          type: 'STRING',
           value: 'Roberto',
         },
         {
-          type: 'string_literal',
-          value: 'Silva',
-        },
-      ],
-    },
-    alias: null,
-  };
-  const expected = `'Roberto' || 'Silva'`;
-
-  const result = generateColumn(node);
-  expect(result).toBe(expected);
-});
-
-test('Generate simple text unique column', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'string_literal',
-      value: 'Roberto',
-    },
-    alias: null,
-  };
-  const result = generateColumn(node);
-  expect(result).toBe(`'Roberto'`);
-});
-
-test('Generate simple text unique column with an alias', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'string_literal',
-      value: 'Roberto',
-    },
-    alias: {
-      type: 'alias',
-      value: {
-        type: 'alias_value',
-        value: 'nome',
-      },
-    },
-  };
-  const result = generateColumn(node);
-  expect(result).toBe(`'Roberto' AS nome`);
-});
-
-test('Generate function call column with an alias', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'function_call',
-      name: 'upper',
-      arguments: ["'Roberto'"],
-    },
-    alias: {
-      type: 'alias',
-      value: {
-        type: 'alias_value',
-        value: 'nome',
-      },
-    },
-  };
-  const result = generateColumn(node);
-  expect(result).toBe(`upper('Roberto') AS nome`);
-});
-
-test('Generate function call column', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'function_call',
-      name: 'to_number',
-      arguments: ["'33'"],
-    },
-  };
-  const result = generateColumn(node);
-  expect(result).toBe(`to_number('33')`);
-});
-
-test('Generate a named column', () => {
-  const node = {
-    type: 'column',
-    columnValue: {
-      type: 'object_value',
-      value: 'nome',
-    },
-    alias: {
-      type: 'alias',
-      value: {
-        type: 'alias_value',
-        value: 'nome',
-      },
-    },
-  };
-  const result = generateColumn(node);
-  expect(result).toBe(`nome AS nome`);
-});
-
-test('Generate union all select', () => {
-  const node = {
-    type: 'union_all',
-    left: {
-      type: 'select',
-      columns: [
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'nome',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'nome',
+          type: 'FUNCTION_CALL',
+          name: 'UPPER',
+          arguments: [
+            {
+              type: 'STRING',
+              value: 'Roberto',
             },
-          },
-        },
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'idade',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'idade',
-            },
-          },
+          ],
         },
       ],
       from: {
-        type: 'from_object',
-        value: 'pessoa',
+        type: 'IDENTIFIER',
+        value: 'dual',
       },
     },
-    right: {
-      type: 'select',
-      columns: [
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'nome',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'nome',
-            },
-          },
-        },
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'idade',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'idade',
-            },
-          },
-        },
-      ],
-      from: {
-        type: 'from_object',
-        value: 'pessoa',
-      },
-    },
-  };
-  const expected = `SELECT nome AS nome, idade AS idade FROM pessoa UNION ALL SELECT nome AS nome, idade AS idade FROM pessoa`;
-  const result = codeGenerator(node);
-  expect(result.toUpperCase()).toBe(expected.toUpperCase());
+  });
+
+  expect(sql).toBe("SELECT 'Roberto', UPPER('Roberto') FROM dual");
 });
 
-test('Generate select with where and union with another select', () => {
-  const ast = {
-    type: 'union',
-    left: {
-      type: 'select',
+test('Generate select with concatenation column', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
       columns: [
         {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'nome',
-          },
-          alias: null,
+          type: 'CONCATENATION',
+          value: [
+            {
+              type: 'STRING',
+              value: 'Roberto',
+              alias: 'name',
+            },
+            {
+              type: 'QUOTED_IDENTIFIER',
+              value: 'Gonzales',
+            },
+          ],
         },
       ],
       from: {
-        type: 'from_object',
-        value: 'pessoa',
+        type: 'IDENTIFIER',
+        value: 'dual',
+      },
+    },
+  });
+
+  expect(sql).toBe('SELECT \'Roberto\' || "Gonzales" FROM dual');
+});
+
+test('Generate select with where greater than number', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'STRING',
+          value: 'Roberto',
+        },
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'dual',
       },
       where: {
-        type: 'where',
-        conjunction: {
-          type: 'and',
+        type: 'WHERE',
+        value: {
+          type: 'GREATER_THAN',
           left: {
-            type: 'equals',
+            type: 'NUMERIC',
+            value: 3,
+          },
+          right: {
+            type: 'NUMERIC',
+            value: 1,
+          },
+        },
+      },
+    },
+  });
+
+  expect(sql).toBe("SELECT 'Roberto' FROM dual WHERE 3 > 1");
+});
+
+test('Generate select with logical operator "and"', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'STRING',
+          value: 'Roberto',
+        },
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'dual',
+      },
+      where: {
+        type: 'WHERE',
+        value: {
+          type: 'AND',
+          left: {
+            type: 'EQUALS',
             left: {
-              type: 'unknown',
-              value: 'id',
+              type: 'STRING',
+              value: 'Roberto',
             },
             right: {
-              type: 'object_value',
-              value: '231323',
+              type: 'STRING',
+              value: 'Gonzales',
             },
           },
           right: {
-            type: 'equals',
+            type: 'LESS_THAN',
             left: {
-              type: 'unknown',
-              value: 'nome',
+              type: 'NUMERIC',
+              value: 3,
             },
             right: {
-              type: 'string_literal',
-              value: 'João',
+              type: 'NUMERIC',
+              value: 1,
             },
           },
         },
       },
     },
-    right: {
-      type: 'select',
+  });
+
+  expect(sql).toBe(
+    "SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales' AND 3 < 1"
+  );
+});
+
+test('Generate select with two and conditions in where clausule', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
       columns: [
         {
-          type: 'column',
-          columnValue: {
-            type: 'string_literal',
+          type: 'STRING',
+          value: 'Roberto',
+        },
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'dual',
+      },
+      where: {
+        type: 'WHERE',
+        value: {
+          type: 'AND',
+          left: {
+            type: 'EQUALS',
+            left: {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+            right: {
+              type: 'STRING',
+              value: 'Gonzales',
+            },
+          },
+          right: {
+            type: 'OR',
+            left: {
+              type: 'LESS_THAN',
+              left: {
+                type: 'NUMERIC',
+                value: 3,
+              },
+              right: {
+                type: 'NUMERIC',
+                value: 1,
+              },
+            },
+            right: {
+              type: 'GREATER_THAN_OR_EQUAL',
+              left: {
+                type: 'NUMERIC',
+                value: 5,
+              },
+              right: {
+                type: 'NUMERIC',
+                value: 2,
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  expect(sql).toBe(
+    "SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales' AND 3 < 1 OR 5 >= 2"
+  );
+});
+
+test('Generate select with parenthesis on where clausule', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'STRING',
+          value: 'Roberto',
+        },
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'dual',
+      },
+      where: {
+        type: 'WHERE',
+        value: {
+          type: 'AND',
+          left: {
+            type: 'EQUALS',
+            left: {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+            right: {
+              type: 'STRING',
+              value: 'Gonzales',
+            },
+          },
+          right: {
+            type: 'PARENTHESIS',
+            value: {
+              type: 'OR',
+              left: {
+                type: 'LESS_THAN',
+                left: {
+                  type: 'NUMERIC',
+                  value: 3,
+                },
+                right: {
+                  type: 'NUMERIC',
+                  value: 1,
+                },
+              },
+              right: {
+                type: 'GREATER_THAN_OR_EQUAL',
+                left: {
+                  type: 'NUMERIC',
+                  value: 5,
+                },
+                right: {
+                  type: 'NUMERIC',
+                  value: 2,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  expect(sql).toBe(
+    "SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales' AND (3 < 1 OR 5 >= 2)"
+  );
+});
+
+test('Generate select with where and clausule', () => {
+  const sql = codeGenerator({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'STRING',
+          value: 'Roberto',
+        },
+      ],
+      from: {
+        type: 'IDENTIFIER',
+        value: 'dual',
+      },
+      where: {
+        type: 'WHERE',
+        value: {
+          type: 'EQUALS',
+          left: {
+            type: 'STRING',
             value: 'Roberto',
           },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'alias_value',
-              value: 'nome',
-            },
-          },
-        },
-      ],
-      from: {
-        type: 'from_object',
-        value: 'pessoa',
-      },
-      where: {
-        type: 'where',
-        conjunction: {
-          type: 'equals',
-          left: {
-            type: 'unknown',
-            value: 'nome',
-          },
           right: {
-            type: 'string_literal',
-            value: 'Maria',
+            type: 'STRING',
+            value: 'Gonzales',
           },
         },
       },
     },
-  };
+  });
 
-  const code = codeGenerator(ast);
-
-  expect(code).toBe('SELECT nome FROM pessoa WHERE id = 231323 AND nome = \'João\' UNION SELECT \'Roberto\' AS nome FROM pessoa WHERE nome = \'Maria\'');
-
-});
-
-test('Generate union two select', () => {
-  const node = {
-    type: 'union',
-    left: {
-      type: 'select',
-      columns: [
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'nome',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'nome',
-            },
-          },
-        },
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'idade',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'idade',
-            },
-          },
-        },
-      ],
-      from: {
-        type: 'from_object',
-        value: 'pessoa',
-      },
-    },
-    right: {
-      type: 'select',
-      columns: [
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'nome',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'nome',
-            },
-          },
-        },
-        {
-          type: 'column',
-          columnValue: {
-            type: 'object_value',
-            value: 'idade',
-          },
-          alias: {
-            type: 'column_alias',
-            value: {
-              type: 'string_literal',
-              value: 'idade',
-            },
-          },
-        },
-      ],
-      from: {
-        type: 'from_object',
-        value: 'pessoa',
-      },
-    },
-  };
-  const expected = `SELECT nome AS nome, idade AS idade FROM pessoa UNION SELECT nome AS nome, idade AS idade FROM pessoa`;
-  const result = codeGenerator(node);
-  expect(result.toUpperCase()).toBe(expected.toUpperCase());
-});
-
-test('Generate SQL with where clausule and union', () => {});
-
-test('Generate simple SQL with where clausule', () => {
-  const node = {
-    type: 'select',
-    columns: [
-      {
-        type: 'column',
-        columnValue: {
-          type: 'object_value',
-          value: 'nome',
-        },
-        alias: {
-          type: 'column_alias',
-          value: {
-            type: 'string_literal',
-            value: 'nome',
-          },
-        },
-      },
-      {
-        type: 'column',
-        columnValue: {
-          type: 'object_value',
-          value: 'idade',
-        },
-        alias: {
-          type: 'column_alias',
-          value: {
-            type: 'string_literal',
-            value: 'idade',
-          },
-        },
-      },
-    ],
-    from: {
-      type: 'from_object',
-      value: 'pessoa',
-    },
-    where: {
-      type: 'where',
-      conjunction: {
-        type: 'equals',
-        left: {
-          type: 'unknown',
-          value: 'idade',
-        },
-        right: {
-          type: 'object_value',
-          value: '18',
-        },
-      },
-    },
-  };
-  const expected = `SELECT nome AS nome, idade AS idade FROM pessoa WHERE idade = 18`;
-  const result = codeGenerator(node);
-  expect(result.toUpperCase()).toBe(expected.toUpperCase());
+  expect(sql).toBe("SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales'");
 });

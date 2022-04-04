@@ -3,6 +3,25 @@ import parser from '../../../modules/parser/parser.mjs';
 import Operator from '../../../constants/operator.mjs';
 import Other from '../../../constants/other.mjs';
 
+test('Parse tokens with an invalid token type', () => {
+  const tokens = tokenizer('SELECT * FROM table');
+  tokens[0].type = 'invalid';
+
+  expect(() => parser(tokens)).toThrowError('Unknown token type: invalid');
+});
+
+test('Parse tokens with undefined array', () => {
+  expect(() => parser(undefined)).toThrowError(
+    'No tokens provided to parser, please validate your SQL'
+  );
+});
+
+test('Parse tokens with empty array', () => {
+  expect(() => parser([])).toThrowError(
+    'No tokens provided to parser, please validate your SQL'
+  );
+});
+
 test('Parse SELECT without where clausule', () => {
   const sql = 'SELECT * FROM table';
   const tokens = tokenizer(sql);

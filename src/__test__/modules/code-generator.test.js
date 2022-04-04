@@ -1,4 +1,5 @@
 import Other from '../../constants/other.mjs';
+import ReservedWord from '../../constants/reserved-words.mjs';
 import codeGenerator from '../../modules/code-generator.mjs';
 
 test('Generate simple SQL query', () => {
@@ -461,4 +462,174 @@ test('Generate select with where and clausule', () => {
   });
 
   expect(sql).toBe("SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales'");
+});
+
+test('Generate SQL union two select', () => {
+  const sql = codeGenerator({
+    type: ReservedWord.UNION,
+    left: {
+      type: 'SELECT',
+      value: {
+        columns: [
+          {
+            type: 'STRING',
+            value: 'Roberto',
+          },
+        ],
+        from: {
+          type: 'IDENTIFIER',
+          value: 'dual',
+        },
+        where: {
+          type: 'WHERE',
+          value: {
+            type: 'EQUALS',
+            left: {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+            right: {
+              type: 'STRING',
+              value: 'Gonzales',
+            },
+          },
+        },
+      },
+    },
+    right: {
+      type: 'SELECT',
+      value: {
+        columns: [
+          {
+            type: 'STRING',
+            value: 'Roberto',
+          },
+        ],
+        from: {
+          type: 'IDENTIFIER',
+          value: 'dual',
+        },
+        where: {
+          type: 'WHERE',
+          value: {
+            type: 'EQUALS',
+            left: {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+            right: {
+              type: 'STRING',
+              value: 'Gonzales',
+            },
+          },
+        },
+      },
+    },
+  });
+
+  expect(sql).toBe(
+    "SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales' UNION SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales'"
+  );
+});
+
+test('Generate SQL union all two select', () => {
+  const sql = codeGenerator({
+    type: Other.UNION_ALL,
+    left: {
+      type: 'SELECT',
+      value: {
+        columns: [
+          {
+            type: 'STRING',
+            value: 'Roberto',
+          },
+        ],
+        from: {
+          type: 'IDENTIFIER',
+          value: 'dual',
+        },
+        where: {
+          type: 'WHERE',
+          value: {
+            type: 'EQUALS',
+            left: {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+            right: {
+              type: 'STRING',
+              value: 'Gonzales',
+            },
+          },
+        },
+      },
+    },
+    right: {
+      type: 'SELECT',
+      value: {
+        columns: [
+          {
+            type: 'STRING',
+            value: 'Roberto',
+          },
+        ],
+        from: {
+          type: 'IDENTIFIER',
+          value: 'dual',
+        },
+        where: {
+          type: 'WHERE',
+          value: {
+            type: 'EQUALS',
+            left: {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+            right: {
+              type: 'STRING',
+              value: 'Gonzales',
+            },
+          },
+        },
+      },
+    },
+  });
+
+  expect(sql).toBe(
+    "SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales' UNION ALL SELECT 'Roberto' FROM dual WHERE 'Roberto' = 'Gonzales'"
+  );
+});
+
+test('Try generate SQL with invalid node type', () => {
+  expect(() => {
+    codeGenerator({
+      type: 'INVALID_TYPE',
+      value: {
+        columns: [
+          {
+            type: 'STRING',
+            value: 'Roberto',
+          },
+        ],
+        from: {
+          type: 'IDENTIFIER',
+          value: 'dual',
+        },
+        where: {
+          type: 'WHERE',
+          value: {
+            type: 'EQUALS',
+            left: {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+            right: {
+              type: 'STRING',
+              value: 'Gonzales',
+            },
+          },
+        },
+      },
+    });
+  }).toThrow("Unsupported node (it's cannot be found as a handled type) ");
 });

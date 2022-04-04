@@ -1,6 +1,6 @@
 import Delimiter from '../../../../constants/delimiter.mjs';
 import Other from '../../../../constants/other.mjs';
-import {
+import identifierWalker, {
   isQuote,
   isStringLiteral,
 } from '../../../../modules/parser/walkers/identifier.mjs';
@@ -69,4 +69,20 @@ test('Validate is string literal with quote', () => {
   ];
 
   expect(isStringLiteral(tokens, 1)).toBe(true);
+});
+
+test('Parse identifier with undefined token', () => {
+  const tokens = [
+    {
+      type: Delimiter.getKeyFromValue(Delimiter.QUOTE),
+    },
+    {
+      type: Delimiter.getKeyFromValue(Delimiter.DOUBLE_QUOTE),
+    },
+  ];
+
+  expect(identifierWalker(tokens, 3)).toEqual({
+    index: 3,
+    value: undefined,
+  });
 });

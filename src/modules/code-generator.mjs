@@ -51,6 +51,8 @@ const codeGenerator = node => {
 
   if (Command.SELECT === type) {
     return generateSelect(node);
+  } else if ([ReservedWord.UNION, Other.UNION_ALL].includes(type)) {
+    return generateUnion(node);
   } else if (Other.PARENTHESIS === type) {
     return `(${codeGenerator(node.value)})`;
   } else if (
@@ -69,8 +71,6 @@ const codeGenerator = node => {
     return node.value.map(codeGenerator).join(' || ');
   } else if ([Other.IDENTIFIER, Operator.WILDCARD].includes(type)) {
     return node.value;
-  } else if (ReservedWord.FROM === type) {
-    return generateFrom(node);
   } else if (ReservedWord.WHERE === type) {
     return `WHERE ${codeGenerator(node.value)}`;
   } else if (Operator.isLogical(type)) {

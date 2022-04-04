@@ -1,4 +1,8 @@
-const { default: tokenizer } = require('../../modules/tokenizer.mjs');
+const {
+  default: tokenizer,
+  getTokenType,
+  handleOtherTypes,
+} = require('../../modules/tokenizer.mjs');
 
 test('Tokenize undefined command', () => {
   expect(() => tokenizer(undefined)).toThrow(
@@ -108,4 +112,20 @@ test('Tokenize non alphanumeric string', () => {
     { type: 'IDENTIFIER', value: 'string' },
     { type: 'DOUBLE_QUOTE', value: '"' },
   ]);
+});
+
+test('Get token type from undefined token', () => {
+  expect(() => getTokenType(undefined)).toThrow('Token not can be undefined');
+});
+
+test('Classifier other type empty string', () => {
+  expect(() => handleOtherTypes('')).toThrow(
+    'The word  is not part of the language, please check the query syntax'
+  );
+});
+
+test('Classifier other type invalid token', () => {
+  expect(() => handleOtherTypes('$asdasdas')).toThrow(
+    'The word $asdasdas is not part of the language, please check the query syntax'
+  );
 });

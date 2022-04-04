@@ -65,8 +65,8 @@ export function processColumn({ parts, alias }) {
 
   if (
     parts.length >= 3 &&
-    parts[0].type === Other.IDENTIFIER &&
-    parts[1].type === Delimiter.getKeyFromValue(Delimiter.LEFT_PARENTHESIS)
+    parts[0]?.type === Other.IDENTIFIER &&
+    parts[1]?.type === Delimiter.getKeyFromValue(Delimiter.LEFT_PARENTHESIS)
   ) {
     const args = parts.slice(2, parts.indexOf(Delimiter.RIGHT_PARENTHESIS));
 
@@ -80,7 +80,9 @@ export function processColumn({ parts, alias }) {
     };
   }
 
-  if (parts[0].type === Delimiter.getKeyFromValue(Delimiter.LEFT_PARENTHESIS)) {
+  if (
+    parts[0]?.type === Delimiter.getKeyFromValue(Delimiter.LEFT_PARENTHESIS)
+  ) {
     const subTokens = parts.slice(
       1,
       parts.indexOf({
@@ -91,7 +93,7 @@ export function processColumn({ parts, alias }) {
 
     return {
       type: Other.PARENTHESIS,
-      value: subTokens.length === 1 ? subTokens[0] : subTokens,
+      value: subTokens[0],
       alias,
     };
   }
@@ -153,13 +155,7 @@ export default (tokens, index) => {
     };
 
     const addAlias = ({ value: alias }) => {
-      if (!columnTmp) {
-        columnTmp = {
-          alias,
-        };
-      } else {
-        columnTmp.alias = alias;
-      }
+      columnTmp.alias = alias;
     };
 
     const buildColumn = () => {
@@ -175,7 +171,7 @@ export default (tokens, index) => {
     };
 
     while (tokens[index]?.type !== ReservedWord.FROM) {
-      if (tokens[index]?.type === Delimiter.COMMA) {
+      if (tokens[index]?.type === Delimiter.getKeyFromValue(Delimiter.COMMA)) {
         buildColumn();
       } else if (tokens[index]?.type === ReservedWord.AS) {
         addAlias(walk(tokens, ++index).value);
@@ -186,9 +182,7 @@ export default (tokens, index) => {
       index++;
     }
 
-    if (columnTmp) {
-      buildColumn();
-    }
+    buildColumn();
 
     return columns;
   };

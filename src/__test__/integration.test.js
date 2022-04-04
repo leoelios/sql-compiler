@@ -11,6 +11,15 @@ test('[E2E] Tokenize, parse and generate simple SQL query', () => {
   expect(generated).toBe('SELECT "Roberto" FROM dual');
 });
 
+test('[E2E] Tokenize, parse and generate select with string column', () => {
+  const sql = "SELECT 'Eduardo' as nome FROM dual";
+  const tokens = tokenizer(sql);
+  const { value: ast } = parser(tokens);
+  const generated = codeGenerator(ast);
+
+  expect(generated).toBe("SELECT 'Eduardo' AS nome FROM dual");
+});
+
 test('[E2E] Tokenize, parse and generate SQL Select with where', () => {
   const sql = 'SELECT "Roberto" FROM dual WHERE name = "Roberto"';
   const tokens = tokenizer(sql);

@@ -49,6 +49,77 @@ test('Process concatenation column parts for new column', () => {
   });
 });
 
+test('Process column with invalid empty parts', () => {
+  expect(() => processColumn({ parts: [] })).toThrow(
+    'Unsupported column type: []'
+  );
+});
+
+test('Parse select with two columns', () => {
+  const { value: ast } = parser([
+    {
+      type: 'SELECT',
+      value: 'select',
+    },
+    {
+      type: 'DOUBLE_QUOTE',
+      value: Delimiter.DOUBLE_QUOTE,
+    },
+    {
+      type: 'IDENTIFIER',
+      value: 'Roberto',
+    },
+    {
+      type: 'DOUBLE_QUOTE',
+      value: Delimiter.DOUBLE_QUOTE,
+    },
+    {
+      type: 'COMMA',
+      value: Delimiter.COMMA,
+    },
+    {
+      type: 'DOUBLE_QUOTE',
+      value: Delimiter.DOUBLE_QUOTE,
+    },
+    {
+      type: 'IDENTIFIER',
+      value: 'Eduardo',
+    },
+    {
+      type: 'DOUBLE_QUOTE',
+      value: Delimiter.DOUBLE_QUOTE,
+    },
+    {
+      type: 'FROM',
+      value: 'from',
+    },
+    {
+      type: 'IDENTIFIER',
+      value: 'dual',
+    },
+  ]);
+
+  expect(ast).toEqual({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: Other.QUOTED_IDENTIFIER,
+          value: 'Roberto',
+        },
+        {
+          type: Other.QUOTED_IDENTIFIER,
+          value: 'Eduardo',
+        },
+      ],
+      from: {
+        type: Other.IDENTIFIER,
+        value: 'dual',
+      },
+    },
+  });
+});
+
 test('Parse select with column named within double quotes', () => {
   const { value: ast } = parser([
     {

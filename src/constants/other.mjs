@@ -12,4 +12,5 @@ export default class Other {
   static SHORT_ALIAS = 'SHORT_ALIAS';
   static AS_ALIAS = 'AS_ALIAS';
   static PARENTHESIS = 'PARENTHESIS';
+  static UNION_ALL = 'UNION ALL';
 }

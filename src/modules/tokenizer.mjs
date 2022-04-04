@@ -12,10 +12,11 @@ export default command => {
     throw new Error('The passed SQL query is not valid');
   }
 
-  return Delimiter.separeByDelimiter(command.trim())
+  const tokens = Delimiter.separeByDelimiter(command.trim())
     .map(removeLineBreak)
-    .filter(a => a)
-    .map(classifier);
+    .filter(a => a);
+
+  return tokens.map(classifier);
 };
 
 /**
@@ -28,27 +29,15 @@ function classifier(token) {
 
   return {
     type,
-    value: getTokenValue({ raw: token, type }),
+    value: token,
   };
-}
-
-/**
- * @param {Token} token contains raw (data) and classified (type).
- * @return {*} Constant Declarated Value of token.
- */
-function getTokenValue({ raw, type }) {
-  if (type === Other.STRING) {
-    return raw.substring(1, raw.length - 1);
-  }
-
-  return raw;
 }
 
 /**
  * @param {String} token Token to classify.
  * @return {Type} Token type.
  */
-function getTokenType(token) {
+export function getTokenType(token) {
   if (!token) {
     throw new Error('Token not can be undefined');
   }
@@ -69,11 +58,9 @@ function getTokenType(token) {
   return type;
 }
 
-const handleOtherTypes = token => {
+export const handleOtherTypes = token => {
   if (isNumeric(token)) {
     return Other.NUMERIC;
-  } else if (token.startsWith("'") && token.endsWith("'")) {
-    return Other.STRING;
   } else if (isValidObjectName(token)) {
     return Other.IDENTIFIER;
   } else {

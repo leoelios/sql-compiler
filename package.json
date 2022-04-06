@@ -1,6 +1,6 @@
 {
   "name": "sql-compiler",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple compiler to tokenize, parse and generate SQL code, allowing edit dynamically the query.",
   "main": "src/index.mjs",
   "scripts": {

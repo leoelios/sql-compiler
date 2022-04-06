@@ -2,6 +2,7 @@ import tokenizer from '../../../modules/tokenizer.mjs';
 import parser from '../../../modules/parser/parser.mjs';
 import Operator from '../../../constants/operator.mjs';
 import Other from '../../../constants/other.mjs';
+import ReservedWord from '../../../constants/reserved-words.mjs';
 
 test('Parse tokens with an invalid token type', () => {
   const tokens = tokenizer('SELECT * FROM table');
@@ -179,6 +180,94 @@ test('Parse SELECT without where and with table alias', () => {
         type: Other.IDENTIFIER,
         value: 'table',
         alias: 't',
+      },
+    },
+  });
+});
+
+test('Parse UNION of two select', () => {
+  const sql = 'SELECT * as test FROM table t UNION SELECT * FROM table2';
+  const tokens = tokenizer(sql);
+  const ast = parser(tokens);
+
+  expect(ast).toEqual({
+    type: ReservedWord.UNION,
+    value: {
+      left: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
+              type: 'WILDCARD',
+              value: Operator.WILDCARD,
+              alias: 'test',
+            },
+          ],
+          from: {
+            type: Other.IDENTIFIER,
+            value: 'table',
+            alias: 't',
+          },
+        },
+      },
+      right: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
+              type: 'WILDCARD',
+              value: Operator.WILDCARD,
+            },
+          ],
+          from: {
+            type: Other.IDENTIFIER,
+            value: 'table2',
+          },
+        },
+      },
+    },
+  });
+});
+
+test('Parse UNION All of two select', () => {
+  const sql = 'SELECT * as test FROM table t UNION ALL SELECT * FROM table2';
+  const tokens = tokenizer(sql);
+  const ast = parser(tokens);
+
+  expect(ast).toEqual({
+    type: Other.getKeyFromValue(Other.UNION_ALL),
+    value: {
+      left: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
+              type: 'WILDCARD',
+              value: Operator.WILDCARD,
+              alias: 'test',
+            },
+          ],
+          from: {
+            type: Other.IDENTIFIER,
+            value: 'table',
+            alias: 't',
+          },
+        },
+      },
+      right: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
+              type: 'WILDCARD',
+              value: Operator.WILDCARD,
+            },
+          ],
+          from: {
+            type: Other.IDENTIFIER,
+            value: 'table2',
+          },
+        },
       },
     },
   });

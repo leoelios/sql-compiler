@@ -40,8 +40,8 @@ export const generateColumn = column => {
  * @param {*} node a object that represent a AST node.
  * @return {string} a SQL string.
  */
-export function generateUnion(node) {
-  return `${codeGenerator(node.left)} ${node.type
+export function generateUnion({ value: node, type }) {
+  return `${codeGenerator(node.left)} ${type
     .toUpperCase()
     .replace('_', ' ')} ${codeGenerator(node.right)}`;
 }

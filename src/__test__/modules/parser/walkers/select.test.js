@@ -1,8 +1,15 @@
+import Command from '../../../../constants/command.mjs';
 import Delimiter from '../../../../constants/delimiter.mjs';
 import Operator from '../../../../constants/operator.mjs';
 import Other from '../../../../constants/other.mjs';
+import ReservedWord from '../../../../constants/reserved-words.mjs';
 import parser from '../../../../modules/parser/parser.mjs';
-import { processColumn } from '../../../../modules/parser/walkers/select.mjs';
+import {
+  getIndexNextSelect,
+  getUnionType,
+  isUnion,
+  processColumn,
+} from '../../../../modules/parser/walkers/select.mjs';
 
 test('Process unique column parts for new column', () => {
   const parts = [
@@ -539,3 +546,125 @@ test('Parse select with subquery with where as column', () => {
 });
 
 test('Parse select with parenthesis from', () => {});
+
+test('Is union with undefined current token', () => {
+  expect(isUnion([], 0)).toBe(false);
+});
+
+test('Is union with union all tokens', () => {
+  expect(
+    isUnion(
+      [
+        {
+          type: ReservedWord.UNION,
+          value: 'Union',
+        },
+        {
+          type: ReservedWord.ALL,
+          value: 'all',
+        },
+      ],
+      0
+    )
+  ).toBe(true);
+});
+
+test('Is union with union token', () => {
+  expect(
+    isUnion(
+      [
+        {
+          type: ReservedWord.AS,
+          value: 'as',
+        },
+        {
+          type: ReservedWord.UNION,
+          value: 'union',
+        },
+        {
+          type: ReservedWord.BY,
+          value: 'by',
+        },
+      ],
+      1
+    )
+  ).toBe(true);
+});
+
+test('Get union type from empty tokens', () => {
+  expect(() => getUnionType([], 0)).toThrow(
+    'Union statement not found in current query'
+  );
+});
+
+test('Get union type from union token', () => {
+  expect(
+    getUnionType(
+      [
+        {
+          type: ReservedWord.UNION,
+          value: 'union',
+        },
+      ],
+      0
+    )
+  ).toBe(ReservedWord.UNION);
+});
+
+test('Get union all type from [union, all] tokens', () => {
+  expect(
+    getUnionType(
+      [
+        {
+          type: ReservedWord.UNION,
+          value: 'union',
+        },
+        {
+          type: ReservedWord.ALL,
+          value: 'all',
+        },
+      ],
+      0
+    )
+  ).toBe(Other.getKeyFromValue(Other.UNION_ALL));
+});
+
+test('Get index of right select on union clausule', () => {
+  expect(
+    getIndexNextSelect(
+      [
+        {
+          type: ReservedWord.UNION,
+          value: 'union',
+        },
+        {
+          type: Command.SELECT,
+          value: 'Select',
+        },
+      ],
+      0
+    )
+  ).toBe(1);
+});
+
+test('Get index of right select on union all clausule', () => {
+  expect(
+    getIndexNextSelect(
+      [
+        {
+          type: ReservedWord.UNION,
+          value: 'union',
+        },
+        {
+          type: ReservedWord.ALL,
+          value: 'all',
+        },
+        {
+          type: Command.SELECT,
+          value: 'Select',
+        },
+      ],
+      0
+    )
+  ).toBe(2);
+});

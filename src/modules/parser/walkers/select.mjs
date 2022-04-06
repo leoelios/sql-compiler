@@ -8,6 +8,49 @@ import { walk } from '../parser.mjs';
 import { isQuote } from './identifier.mjs';
 
 /**
+ * @param {Array<Object>} tokens Tokens sort
+ * @param {Integer} index current index of tokens
+ * @return {Boolean} if curret token is Union
+ */
+export function isUnion(tokens, index) {
+  const current = tokens[index];
+  return ReservedWord.UNION === current?.type;
+}
+
+/**
+ * @param {Array<Object>} tokens Tokens sort
+ * @param {Integer} index Current index of tokens
+ * @return {String} type of union
+ */
+export function getUnionType(tokens, index) {
+  const next = tokens[index + 1];
+
+  if (isUnion(tokens, index) && ReservedWord.ALL === next?.type) {
+    return Other.UNION_ALL;
+  } else if (isUnion(tokens, index)) {
+    return ReservedWord.UNION;
+  }
+
+  throw new Error('Union statement not found in current query');
+}
+
+/**
+ * @param {Array<Object>} tokens Tokens sort.
+ * @param {Integer} index Current token index.
+ * @return {Integer} Right index of select part of union.
+ */
+export function getIndexNextSelect(tokens, index) {
+  const unionType = getUnionType(tokens, index);
+
+  switch (unionType) {
+    case ReservedWord.UNION:
+      return index + 1;
+    case Other.UNION_ALL:
+      return index + 2;
+  }
+}
+
+/**
  * @param {*} tokens Tokens to be analyzed.
  * @param {*} index Index of current token.
  * @return {Boolean} If the current token is the init of WHERE clausule.
@@ -246,7 +289,7 @@ export default (tokens, index) => {
     };
   };
 
-  return {
+  const currentSelect = {
     value: {
       type: Command.SELECT,
       value: {
@@ -257,4 +300,21 @@ export default (tokens, index) => {
     },
     index: index - 1,
   };
+
+  if (isUnion(tokens, index)) {
+    const { value: nextSelect } = walk(
+      tokens,
+      getIndexNextSelect(tokens, index)
+    );
+
+    return {
+      type: getUnionType(tokens, index),
+      value: {
+        left: currentSelect.value,
+        right: nextSelect,
+      },
+    };
+  }
+
+  return currentSelect;
 };

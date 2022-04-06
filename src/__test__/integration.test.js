@@ -98,3 +98,27 @@ test('[E2E] Tokenize, parse and generate SQL concatenation', () => {
     `SELECT "NAME" || CHR(01) || 'AGE' || CHR(01) || 'WORK' || CHR(01) FROM dual WHERE 1 = 1`
   );
 });
+
+test('[E2E] Tokenize, parse and generate Union SQL', () => {
+  const sql = `SELECT "Roberto" FROM dual UNION SELECT "Roberto" FROM dual`;
+  const tokens = tokenizer(sql);
+  const ast = parser(tokens);
+  const generated = codeGenerator(ast);
+
+  expect(generated).toBe(
+    `SELECT "Roberto" FROM dual UNION SELECT "Roberto" FROM dual`
+  );
+});
+
+test('[E2E] Tokenize, parse and generate Union All SQL', () => {
+  const sql = `SELECT "Roberto" FROM dual
+     UNION
+  ALL SELECT "Roberto" FROM dual`;
+  const tokens = tokenizer(sql);
+  const ast = parser(tokens);
+  const generated = codeGenerator(ast);
+
+  expect(generated).toBe(
+    `SELECT "Roberto" FROM dual UNION ALL SELECT "Roberto" FROM dual`
+  );
+});

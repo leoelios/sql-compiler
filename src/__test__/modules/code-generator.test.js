@@ -469,59 +469,61 @@ test('Generate select with where and clausule', () => {
 test('Generate SQL union two select', () => {
   const sql = codeGenerator({
     type: ReservedWord.UNION,
-    left: {
-      type: 'SELECT',
-      value: {
-        columns: [
-          {
-            type: 'STRING',
-            value: 'Roberto',
-          },
-        ],
-        from: {
-          type: 'IDENTIFIER',
-          value: 'dual',
-        },
-        where: {
-          type: 'WHERE',
-          value: {
-            type: 'EQUALS',
-            left: {
+    value: {
+      left: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
               type: 'STRING',
               value: 'Roberto',
             },
-            right: {
-              type: 'STRING',
-              value: 'Gonzales',
+          ],
+          from: {
+            type: 'IDENTIFIER',
+            value: 'dual',
+          },
+          where: {
+            type: 'WHERE',
+            value: {
+              type: 'EQUALS',
+              left: {
+                type: 'STRING',
+                value: 'Roberto',
+              },
+              right: {
+                type: 'STRING',
+                value: 'Gonzales',
+              },
             },
           },
         },
       },
-    },
-    right: {
-      type: 'SELECT',
-      value: {
-        columns: [
-          {
-            type: 'STRING',
-            value: 'Roberto',
-          },
-        ],
-        from: {
-          type: 'IDENTIFIER',
-          value: 'dual',
-        },
-        where: {
-          type: 'WHERE',
-          value: {
-            type: 'EQUALS',
-            left: {
+      right: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
               type: 'STRING',
               value: 'Roberto',
             },
-            right: {
-              type: 'STRING',
-              value: 'Gonzales',
+          ],
+          from: {
+            type: 'IDENTIFIER',
+            value: 'dual',
+          },
+          where: {
+            type: 'WHERE',
+            value: {
+              type: 'EQUALS',
+              left: {
+                type: 'STRING',
+                value: 'Roberto',
+              },
+              right: {
+                type: 'STRING',
+                value: 'Gonzales',
+              },
             },
           },
         },
@@ -537,59 +539,61 @@ test('Generate SQL union two select', () => {
 test('Generate SQL union all two select', () => {
   const sql = codeGenerator({
     type: Other.UNION_ALL,
-    left: {
-      type: 'SELECT',
-      value: {
-        columns: [
-          {
-            type: 'STRING',
-            value: 'Roberto',
-          },
-        ],
-        from: {
-          type: 'IDENTIFIER',
-          value: 'dual',
-        },
-        where: {
-          type: 'WHERE',
-          value: {
-            type: 'EQUALS',
-            left: {
+    value: {
+      left: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
               type: 'STRING',
               value: 'Roberto',
             },
-            right: {
-              type: 'STRING',
-              value: 'Gonzales',
+          ],
+          from: {
+            type: 'IDENTIFIER',
+            value: 'dual',
+          },
+          where: {
+            type: 'WHERE',
+            value: {
+              type: 'EQUALS',
+              left: {
+                type: 'STRING',
+                value: 'Roberto',
+              },
+              right: {
+                type: 'STRING',
+                value: 'Gonzales',
+              },
             },
           },
         },
       },
-    },
-    right: {
-      type: 'SELECT',
-      value: {
-        columns: [
-          {
-            type: 'STRING',
-            value: 'Roberto',
-          },
-        ],
-        from: {
-          type: 'IDENTIFIER',
-          value: 'dual',
-        },
-        where: {
-          type: 'WHERE',
-          value: {
-            type: 'EQUALS',
-            left: {
+      right: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
               type: 'STRING',
               value: 'Roberto',
             },
-            right: {
-              type: 'STRING',
-              value: 'Gonzales',
+          ],
+          from: {
+            type: 'IDENTIFIER',
+            value: 'dual',
+          },
+          where: {
+            type: 'WHERE',
+            value: {
+              type: 'EQUALS',
+              left: {
+                type: 'STRING',
+                value: 'Roberto',
+              },
+              right: {
+                type: 'STRING',
+                value: 'Gonzales',
+              },
             },
           },
         },

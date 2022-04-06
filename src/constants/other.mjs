@@ -1,7 +1,9 @@
+import AbstractConstant from './abstract-constant.mjs';
+
 /**
  * Generics token type.
  */
-export default class Other {
+export default class Other extends AbstractConstant {
   static IDENTIFIER = 'IDENTIFIER';
   static QUOTED_IDENTIFIER = 'QUOTED_IDENTIFIER';
   static NUMERIC = 'NUMERIC';
@@ -12,5 +14,5 @@ export default class Other {
   static SHORT_ALIAS = 'SHORT_ALIAS';
   static AS_ALIAS = 'AS_ALIAS';
   static PARENTHESIS = 'PARENTHESIS';
-  static UNION_ALL = 'UNION ALL';
+  static UNION_ALL = 'UNION_ALL';
 }

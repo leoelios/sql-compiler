@@ -47,6 +47,32 @@ const walkWhereParts = (tokens, index) => {
 };
 
 /**
+ * Split an array in subarrays of where parts.
+ *
+ * @param {*} arr Array to be splitted.
+ * @param {*} delimiter Delimiter to be used as delimiter.
+ * @return {Array<Array>} Array of subarrays.
+ */
+function splitTokensByConcatOperator(arr) {
+  const arrays = [];
+  let index = 0;
+
+  while (index < arr.length) {
+    const value = arr[index];
+
+    if (value.type === Operator.getKeyFromValue(Operator.CONCAT)) {
+      arrays.push(arr.slice(0, index));
+      arr = arr.slice(index + 1);
+      index = 0;
+    } else {
+      index++;
+    }
+  }
+
+  return [...arrays, arr];
+}
+
+/**
  * @param {Array<Token>} parts Tokens to be analyzed that are part of Select column.
  * @return {Object} The AST (Abstract Syntax Tree) of column.
  */
@@ -54,11 +80,12 @@ export function processColumn({ parts, alias }) {
   if (
     parts.some(({ type }) => Operator.getKeyFromValue(Operator.CONCAT) === type)
   ) {
+    const subParts = splitTokensByConcatOperator(parts);
+    const subColumns = subParts.map(parts => processColumn({ parts }));
+
     return {
       type: Other.CONCATENATION,
-      value: parts.filter(
-        ({ type }) => Operator.getKeyFromValue(Operator.CONCAT) !== type
-      ),
+      value: subColumns,
       alias,
     };
   }

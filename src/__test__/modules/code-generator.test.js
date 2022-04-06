@@ -166,13 +166,15 @@ test('Generate select with function call column', () => {
         },
         {
           type: 'FUNCTION_CALL',
-          name: 'UPPER',
-          arguments: [
-            {
-              type: 'STRING',
-              value: 'Roberto',
-            },
-          ],
+          value: {
+            name: 'UPPER',
+            arguments: [
+              {
+                type: 'STRING',
+                value: 'Roberto',
+              },
+            ],
+          },
         },
       ],
       from: {

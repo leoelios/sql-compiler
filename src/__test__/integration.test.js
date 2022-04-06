@@ -81,3 +81,20 @@ test('[E2E] Tokenize, parse and generate SQL selecty with subquery column', () =
     'SELECT (SELECT * FROM DUAL) AS test FROM dual WHERE name = "Roberto" OR name = "Roberto" AND age = 1 AND age = 2 AND name = "Roberto"'
   );
 });
+
+test('[E2E] Tokenize, parse and generate SQL concatenation', () => {
+  const sql = `SELECT
+    "NAME" || CHR(01) ||
+    'AGE' || CHR(01) ||
+    'WORK' || CHR(01)
+    FROM dual
+    WHERE
+      1 = 1`;
+  const tokens = tokenizer(sql);
+  const { value: ast } = parser(tokens);
+  const generated = codeGenerator(ast);
+
+  expect(generated).toBe(
+    `SELECT "NAME" || CHR(01) || 'AGE' || CHR(01) || 'WORK' || CHR(01) FROM dual WHERE 1 = 1`
+  );
+});

@@ -130,6 +130,36 @@ test('Parse SELECT with where clausule', () => {
   });
 });
 
+test('Parse SELECT with function call column type', () => {
+  const sql = 'SELECT COUNT(*) FROM table';
+  const tokens = tokenizer(sql);
+  const { value: ast } = parser(tokens);
+
+  expect(ast).toEqual({
+    type: 'SELECT',
+    value: {
+      columns: [
+        {
+          type: 'FUNCTION_CALL',
+          value: {
+            arguments: [
+              {
+                type: 'WILDCARD',
+                value: Operator.WILDCARD,
+              },
+            ],
+            name: 'COUNT',
+          },
+        },
+      ],
+      from: {
+        type: Other.IDENTIFIER,
+        value: 'table',
+      },
+    },
+  });
+});
+
 test('Parse SELECT without where and with table alias', () => {
   const sql = 'SELECT * as test FROM table t';
   const tokens = tokenizer(sql);

@@ -62,7 +62,7 @@ const codeGenerator = node => {
   } else if (Other.STRING === type) {
     return `'${node.value}'`;
   } else if (Other.FUNCTION_CALL === type) {
-    return `${node.name}(${node.arguments
+    return `${node.value.name}(${node.value.arguments
       .map(arg => codeGenerator(arg))
       .join(', ')})`;
   } else if (Other.QUOTED_IDENTIFIER === type) {

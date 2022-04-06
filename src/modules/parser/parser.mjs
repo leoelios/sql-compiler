@@ -19,6 +19,7 @@ export const walk = (tokens, index) => {
     case Delimiter.getKeyFromValue(Delimiter.RIGHT_PARENTHESIS):
     case Comparator.getKeyFromValue(Comparator.EQUALS):
     case Delimiter.getKeyFromValue(Delimiter.DOUBLE_QUOTE):
+    case Operator.getKeyFromValue(Operator.CONCAT):
     case Operator.AND:
     case Operator.OR:
     case Other.NUMERIC:

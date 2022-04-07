@@ -122,3 +122,29 @@ test('[E2E] Tokenize, parse and generate Union All SQL', () => {
     `SELECT "Roberto" FROM dual UNION ALL SELECT "Roberto" FROM dual`
   );
 });
+
+test('[E2E] Tokenize, parse and generate Union all with two select where clausule', () => {
+  const sql = `SELECT
+      'FIRST_NAME' || CHR(01) ||
+      'LAST_NAME' || CHR(01) ||
+      'AGE' as linha
+    from dual
+    WHERE
+      2 = 2
+    UNION ALL
+    SELECT
+    first_name ||
+    last_name ||
+    age
+  FROM
+    people p
+  WHERE
+    1 = 1`;
+  const tokens = tokenizer(sql);
+  const ast = parser(tokens);
+  const generated = codeGenerator(ast);
+
+  expect(generated).toBe(
+    `SELECT 'FIRST_NAME' || CHR(01) || 'LAST_NAME' || CHR(01) || 'AGE' AS linha FROM dual WHERE 2 = 2 UNION ALL SELECT first_name || last_name || age FROM people p WHERE 1 = 1`
+  );
+});

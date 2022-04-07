@@ -67,7 +67,7 @@ const walkWhereParts = (tokens, index) => {
       return {
         type: tokens[index].type,
         left: comparation,
-        right: walkWhereParts(tokens, index + 1),
+        right: walkWhereParts(tokens, index + 1).value,
       };
     }
 
@@ -86,7 +86,10 @@ const walkWhereParts = (tokens, index) => {
     }
   }
 
-  return comparation;
+  return {
+    value: comparation,
+    index,
+  };
 };
 
 /**
@@ -283,9 +286,13 @@ export default (tokens, index) => {
   };
 
   const walkWhere = () => {
+    const { value, index: whereIndex } = walkWhereParts(tokens, ++index);
+
+    index = whereIndex;
+
     return {
       type: ReservedWord.WHERE,
-      value: walkWhereParts(tokens, ++index),
+      value,
     };
   };
 

@@ -9,13 +9,11 @@ A simple compiler to tokenize, parse and generate SQL code, allowing edit dynami
 Here is a simple usage. We'll use compile the following query:
 
 ```js
-import tokenizer from '../../modules/tokenizer.mjs';
-import parser from '../../modules/parser/parser.mjs';
-import codeGenerator from '../../modules/code-generator.mjs';
+import Compiler from 'sql-compiler';
 
 /** 1. Parse string SQL to Abstract Syntax Tree */
-const { value: ast } = parser(
-  tokenizer(
+const { value: ast } = Compiler.parser(
+  Compiler.tokenizer(
     `SELECT
     'Leonardo' as name,
     'Dicaprio' as lastname
@@ -32,7 +30,7 @@ ast.value.columns.push({
 });
 
 /** 3. Generate the manipulated SQL. */
-const code = codeGenerator(ast);
+const code = Compiler.codeGenerator(ast);
 
 console.log(code);
 // STDOUT: SELECT 'Leonardo' AS name, 'Dicaprio' AS lastname, 20 AS age FROM dual l

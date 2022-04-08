@@ -1,6 +1,7 @@
 # SQL Compiler
 
 [![coverage](https://codecov.io/gh/leoelias023/sql-compiler/branch/main/graph/badge.svg?token=1LX21DN4DI)](https://codecov.io/gh/leoelias023/sql-compiler)
+![Project dependency free](https://img.shields.io/badge/dependency--free-yes-success)
 
 A simple compiler to tokenize, parse and generate SQL code, allowing edit dynamically the query.
 

@@ -24,4 +24,15 @@ export default class Delimiter extends AbstractConstant {
 
     return newSQL.split(' ').filter(nonBlank);
   }
+
+  /**
+   * @param {String} key Key of delimiter.
+   * @return {Boolean} If key parameter is a parenthesis.
+   */
+  static isParenthesis(key) {
+    return [
+      Delimiter.getKeyFromValue(this.LEFT_PARENTHESIS),
+      Delimiter.getKeyFromValue(this.RIGHT_PARENTHESIS),
+    ].includes(key);
+  }
 }

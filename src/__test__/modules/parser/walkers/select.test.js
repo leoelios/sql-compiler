@@ -1,4 +1,5 @@
 import Command from '../../../../constants/command.mjs';
+import Comparator from '../../../../constants/comparator.mjs';
 import Delimiter from '../../../../constants/delimiter.mjs';
 import Operator from '../../../../constants/operator.mjs';
 import Other from '../../../../constants/other.mjs';
@@ -9,6 +10,7 @@ import {
   getUnionType,
   isUnion,
   processColumn,
+  processWhereIdentifier,
 } from '../../../../modules/parser/walkers/select.mjs';
 
 test('Process unique column parts for new column', () => {
@@ -667,4 +669,191 @@ test('Get index of right select on union all clausule', () => {
       0
     )
   ).toBe(2);
+});
+
+test('Process where identifiers (simple equals)', () => {
+  const processedTokens = processWhereIdentifier(
+    [
+      {
+        type: Other.IDENTIFIER,
+        value: 'name',
+      },
+      {
+        type: Comparator.getKeyFromValue(Comparator.EQUALS),
+        value: '=',
+      },
+      {
+        type: Delimiter.getKeyFromValue(Delimiter.QUOTE),
+        value: "'",
+      },
+      {
+        type: Other.IDENTIFIER,
+        value: 'Roberto',
+      },
+      {
+        type: Delimiter.getKeyFromValue(Delimiter.QUOTE),
+        value: "'",
+      },
+    ],
+    0
+  );
+
+  expect(processedTokens).toEqual([
+    {
+      type: Other.IDENTIFIER,
+      value: 'name',
+    },
+    {
+      type: Comparator.getKeyFromValue(Comparator.EQUALS),
+      value: '=',
+    },
+    {
+      type: Other.STRING,
+      value: 'Roberto',
+    },
+  ]);
+});
+
+test('Process where identifiers (logical aggregator + compare two numeric values)', () => {
+  const processedTokens = processWhereIdentifier(
+    [
+      {
+        type: Other.IDENTIFIER,
+        value: 'age',
+      },
+      {
+        type: Comparator.getKeyFromValue(Comparator.GREATER_THAN),
+        value: '>',
+      },
+      {
+        type: Other.NUMERIC,
+        value: '18',
+      },
+      {
+        type: Operator.getKeyFromValue(Operator.AND),
+        value: 'and',
+      },
+      {
+        type: Other.IDENTIFIER,
+        value: 'age',
+      },
+      {
+        type: Comparator.getKeyFromValue(Comparator.LESS_THAN),
+        value: '<',
+      },
+      {
+        type: Other.NUMERIC,
+        value: '30',
+      },
+    ],
+    0
+  );
+
+  expect(processedTokens).toEqual([
+    {
+      type: Other.IDENTIFIER,
+      value: 'age',
+    },
+    {
+      type: Comparator.getKeyFromValue(Comparator.GREATER_THAN),
+      value: '>',
+    },
+    {
+      type: Other.NUMERIC,
+      value: '18',
+    },
+    {
+      type: Operator.getKeyFromValue(Operator.AND),
+      value: 'and',
+    },
+    {
+      type: Other.IDENTIFIER,
+      value: 'age',
+    },
+    {
+      type: Comparator.getKeyFromValue(Comparator.LESS_THAN),
+      value: '<',
+    },
+    {
+      type: Other.NUMERIC,
+      value: '30',
+    },
+  ]);
+});
+
+test('Process where identifier (compare identifier with sub-query)', () => {
+  const processedTokens = processWhereIdentifier(
+    [
+      {
+        type: Other.IDENTIFIER,
+        value: 'age',
+      },
+      {
+        type: Comparator.getKeyFromValue(Comparator.EQUALS),
+        value: '=',
+      },
+      {
+        type: Delimiter.getKeyFromValue(Delimiter.LEFT_PARENTHESIS),
+        value: '(',
+      },
+      {
+        type: 'SELECT',
+        value: 'select',
+      },
+      {
+        type: 'QUOTE',
+        value: Delimiter.QUOTE,
+      },
+      {
+        type: 'IDENTIFIER',
+        value: 'Roberto',
+      },
+      {
+        type: 'QUOTE',
+        value: Delimiter.QUOTE,
+      },
+      {
+        type: 'FROM',
+        value: 'from',
+      },
+      {
+        type: 'IDENTIFIER',
+        value: 'dual',
+      },
+      {
+        type: Delimiter.getKeyFromValue(Delimiter.RIGHT_PARENTHESIS),
+        value: ')',
+      },
+    ],
+    0
+  );
+
+  expect(processedTokens).toEqual([
+    {
+      type: Other.IDENTIFIER,
+      value: 'age',
+    },
+    {
+      type: Comparator.getKeyFromValue(Comparator.EQUALS),
+      value: '=',
+    },
+    {
+      type: Other.PARENTHESIS,
+      value: {
+        type: 'SELECT',
+        value: {
+          columns: [
+            {
+              type: 'STRING',
+              value: 'Roberto',
+            },
+          ],
+          from: {
+            type: Other.IDENTIFIER,
+            value: 'dual',
+          },
+        },
+      },
+    },
+  ]);
 });

@@ -1,4 +1,5 @@
 import AbstractConstant from './abstract-constant.mjs';
+import Delimiter from './delimiter.mjs';
 
 /**
  * Reserved words that can be found in SQL Language, but primary this will be @link unknown.
@@ -18,7 +19,13 @@ export default class ReservedWord extends AbstractConstant {
    * @return {Array<string>} all types of tokens that can indicate a final of WHERE clausule.
    */
   static getWhereEndWords() {
-    return [this.UNION, this.ALL, this.LIMIT, this.ORDER];
+    return [
+      this.UNION,
+      this.ALL,
+      this.LIMIT,
+      this.ORDER,
+      Delimiter.getKeyFromValue(Delimiter.RIGHT_PARENTHESIS),
+    ];
   }
 
   /**

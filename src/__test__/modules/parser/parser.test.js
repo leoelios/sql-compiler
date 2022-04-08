@@ -3,6 +3,8 @@ import parser from '../../../modules/parser/parser.mjs';
 import Operator from '../../../constants/operator.mjs';
 import Other from '../../../constants/other.mjs';
 import ReservedWord from '../../../constants/reserved-words.mjs';
+import Command from '../../../constants/command.mjs';
+import Comparator from '../../../constants/comparator.mjs';
 
 test('Parse tokens with an invalid token type', () => {
   const tokens = tokenizer('SELECT * FROM table');
@@ -266,6 +268,67 @@ test('Parse UNION All of two select', () => {
           from: {
             type: Other.IDENTIFIER,
             value: 'table2',
+          },
+        },
+      },
+    },
+  });
+});
+
+test('Parse select with where comparing identifier and subquery', () => {
+  const sql =
+    'SELECT * as test FROM table t WHERE data = (SELECT max(data) From dual)';
+  const tokens = tokenizer(sql);
+  const { value: ast } = parser(tokens);
+
+  expect(ast).toEqual({
+    type: Command.SELECT,
+    value: {
+      columns: [
+        {
+          alias: 'test',
+          type: Operator.getKeyFromValue(Operator.WILDCARD),
+          value: '*',
+        },
+      ],
+      from: {
+        alias: 't',
+        type: Other.IDENTIFIER,
+        value: 'table',
+      },
+      where: {
+        type: ReservedWord.WHERE,
+        value: {
+          type: Comparator.getKeyFromValue(Comparator.EQUALS),
+          left: {
+            type: Other.IDENTIFIER,
+            value: 'data',
+          },
+          right: {
+            type: Other.PARENTHESIS,
+            value: {
+              type: Command.SELECT,
+              value: {
+                columns: [
+                  {
+                    type: Other.FUNCTION_CALL,
+                    value: {
+                      name: 'max',
+                      arguments: [
+                        {
+                          type: Other.IDENTIFIER,
+                          value: 'data',
+                        },
+                      ],
+                    },
+                  },
+                ],
+                from: {
+                  type: Other.IDENTIFIER,
+                  value: 'dual',
+                },
+              },
+            },
           },
         },
       },

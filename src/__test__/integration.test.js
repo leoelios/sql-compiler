@@ -148,3 +148,28 @@ test('[E2E] Tokenize, parse and generate Union all with two select where clausul
     `SELECT 'FIRST_NAME' || CHR(01) || 'LAST_NAME' || CHR(01) || 'AGE' AS linha FROM dual WHERE 2 = 2 UNION ALL SELECT first_name || last_name || age FROM people p WHERE 1 = 1`
   );
 });
+
+test('[E2E] Tokenize, parse, and generate select with where subquery', () => {
+  const sql = `SELECT
+    'FIRST_NAME' || CHR(01) ||
+    'LAST_NAME' || CHR(01) ||
+    'AGE' as linha
+  FROM
+    dual
+  WHERE
+    1 = 1
+  AND
+    (SELECT
+      1
+    FROM
+      dual
+    Where
+      2 = 2) = 1`;
+  const tokens = tokenizer(sql);
+  const { value: ast } = parser(tokens);
+  const generated = codeGenerator(ast);
+
+  expect(generated).toBe(
+    `SELECT 'FIRST_NAME' || CHR(01) || 'LAST_NAME' || CHR(01) || 'AGE' AS linha FROM dual WHERE 1 = 1 AND (SELECT 1 FROM dual WHERE 2 = 2) = 1`
+  );
+});

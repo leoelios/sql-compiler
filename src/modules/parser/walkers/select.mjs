@@ -18,6 +18,45 @@ export function isUnion(tokens, index) {
 }
 
 /**
+ * @param {Array<Object>} tokens Tokens to be processed
+ * @param {Integer} index First index of Where clausule in Select.
+ * @return {Array<Object>} processed tokens.
+ */
+export function processWhereIdentifier(tokens, index) {
+  const parts = [];
+  const tokensFinal = tokens.slice(0, index);
+  let i = index;
+
+  while (tokens[i]) {
+    const token = tokens[i];
+
+    if (Operator.isLogical(token.type) || Comparator.is(token.type)) {
+      tokensFinal.push(processColumn({ parts }));
+      tokensFinal.push(token);
+      parts.length = 0;
+    } else if (!ReservedWord.isEndOfWhere(token) && !isQuote(token)) {
+      const { value, index: nextIndex } = walk(tokens, i);
+      // If is SELECT, just slice array tokens and get a sub array
+      i = nextIndex;
+      parts.push(value);
+    } else if (
+      ReservedWord.isEndOfWhere(token) &&
+      Delimiter.isParenthesis(tokens[i]?.type) &&
+      Delimiter.isParenthesis(parts[0]?.type)
+    ) {
+      parts.push(token);
+    } else if (ReservedWord.isEndOfWhere(token)) {
+      break;
+    }
+    i++;
+  }
+
+  tokensFinal.push(processColumn({ parts }));
+
+  return tokensFinal;
+}
+
+/**
  * @param {Array<Object>} tokens Tokens sort
  * @param {Integer} index Current index of tokens
  * @return {String} type of union
@@ -59,38 +98,44 @@ export function isWhere(tokens, index) {
   return tokens[index]?.type === ReservedWord.WHERE;
 }
 
-const walkWhereParts = (tokens, index) => {
-  let comparation;
+/**
+ * @param {Array<Object>} tokens Tokens of a query.
+ * @param {Integer} index Current index of where.
+ * @param {Boolean} lastIndex If walkWhereParts already been called.
+ * @return {Object} AST of where.
+ */
+export function walkWhereParts(tokens, index, lastIndex) {
+  const token = tokens[index];
 
-  while (!ReservedWord.isEndOfWhere(tokens[index])) {
-    if (Operator.isLogical(tokens[index]?.type)) {
-      return {
-        type: tokens[index].type,
-        left: comparation,
-        right: walkWhereParts(tokens, index + 1).value,
-      };
-    }
+  if (Operator.isLogical(tokens[index + 2]?.type) && !lastIndex) {
+    const logical = tokens[index + 2];
 
-    if (Comparator.is(tokens[index + 1]?.type)) {
-      const rightIndex = isQuote(tokens[index + 2]) ? 3 : 2;
-      const { value: right } = walk(tokens, index + rightIndex);
+    const left = walkWhereParts(tokens, index, true);
+    const right = walkWhereParts(tokens, index + 4);
 
-      comparation = {
-        type: tokens[index + 1].type,
-        left: tokens[index],
-        right,
-      };
-      index += rightIndex === 3 ? 4 : 3;
-    } else {
-      index++;
-    }
+    return {
+      index: right.index,
+      value: {
+        type: logical.type,
+        left: left.value,
+        right: right.value,
+      },
+    };
   }
 
-  return {
-    value: comparation,
-    index,
-  };
-};
+  if (Comparator.is(token.type)) {
+    return {
+      index: index + 1,
+      value: {
+        type: token.type,
+        left: tokens[index - 1],
+        right: tokens[index + 1],
+      },
+    };
+  }
+
+  return walkWhereParts(tokens, index + 1);
+}
 
 /**
  * Split an array in subarrays of where parts.
@@ -286,9 +331,9 @@ export default (tokens, index) => {
   };
 
   const walkWhere = () => {
-    const { value, index: whereIndex } = walkWhereParts(tokens, ++index);
-
-    index = whereIndex;
+    const whereTokens = processWhereIdentifier(tokens, ++index);
+    const { value, index: nextIndex } = walkWhereParts(whereTokens, index);
+    index = nextIndex + 1;
 
     return {
       type: ReservedWord.WHERE,
@@ -302,11 +347,13 @@ export default (tokens, index) => {
       value: {
         columns: walkColumns(),
         from: walkFrom(),
-        where: isWhere(tokens, index) ? walkWhere() : undefined,
       },
     },
-    index: index - 1,
   };
+
+  if (isWhere(tokens, index)) {
+    currentSelect.value.value.where = walkWhere();
+  }
 
   if (isUnion(tokens, index)) {
     const { value: nextSelect } = walk(
@@ -323,5 +370,8 @@ export default (tokens, index) => {
     };
   }
 
-  return currentSelect;
+  return {
+    ...currentSelect,
+    index: index - 1,
+  };
 };
